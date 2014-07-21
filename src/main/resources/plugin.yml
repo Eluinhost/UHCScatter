@@ -1,0 +1,16 @@
+name: UHCScatter
+main: com.publicuhc.uhcscatter.UhcScatterPlugin
+version: 1.0.0
+description: Test scatter plugin for UHC
+author: ghowden/Eluinhost
+website: wiki.publicuhc.com
+database: false
+commands:
+    scatter:
+      description: Scatter players
+      usage: /<command>
+      aliases: [uhcscatter]
+permissions:
+    UHC.scatter.command:
+        description: Use the scatter command
+        default: op
