@@ -35,6 +35,10 @@ public class ScatterCommand implements CommandExecutor {
      */
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if(!sender.hasPermission("UHC.scatter.command")) {
+            sender.sendMessage(ChatColor.RED + "You don't have permission to run this command");
+            return true;
+        }
         if(args.length < 4) {
             sender.sendMessage(SYNTAX);
             return true;
