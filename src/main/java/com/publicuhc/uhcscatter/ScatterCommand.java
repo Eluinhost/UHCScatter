@@ -1,7 +1,11 @@
 package com.publicuhc.uhcscatter;
 
+import com.publicuhc.scatter.logic.RandomCircleScatterLogic;
+import com.publicuhc.scatter.logic.RandomSquareScatterLogic;
+import com.publicuhc.scatter.logic.StandardScatterLogic;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -11,6 +15,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 public class ScatterCommand implements CommandExecutor {
 
@@ -18,7 +23,6 @@ public class ScatterCommand implements CommandExecutor {
 
     /**
      * Parse the scatter command in the syntax:
-
      *     /scatter typeID radius worldName players [-c=x,z] [-t] [-min=minDist] [-minradius=minRadius]
      */
     @Override
@@ -29,7 +33,15 @@ public class ScatterCommand implements CommandExecutor {
         }
 
         String typeID = args[0];
-        //TODO check typeID
+        StandardScatterLogic logic;
+        if(typeID.equalsIgnoreCase("circle")) {
+            logic = new RandomCircleScatterLogic(new Random());
+        } else if(typeID.equalsIgnoreCase("square")) {
+            logic = new RandomSquareScatterLogic(new Random());
+        } else {
+            sender.sendMessage(ChatColor.RED + "Type ID must be 'circle' or 'square', " + args[0] + "given");
+            return true;
+        }
 
         double radius;
         try {
@@ -106,6 +118,13 @@ public class ScatterCommand implements CommandExecutor {
             }
             toScatter.add(player);
         }
+
+        logic.setCentre(new Location(world, centerX, 0, centerZ));
+        logic.setMaxAttempts(250); //TODO config
+        logic.setRadius(radius);
+
+
+
 
         return false;
     }
