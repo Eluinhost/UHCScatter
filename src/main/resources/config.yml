@@ -1,0 +1,9 @@
+allowed blocks:
+- DIRT
+- GRASS
+- SNOW
+- SAND
+- LEAVES
+- SNOW_BLOCK
+- ICE
+- LONG_GRASS

@@ -8,10 +8,7 @@ import com.publicuhc.scatter.logic.RandomSquareScatterLogic;
 import com.publicuhc.scatter.logic.StandardScatterLogic;
 import com.publicuhc.scatter.zones.CircularDeadZoneBuilder;
 import com.publicuhc.scatter.zones.DeadZone;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -22,6 +19,13 @@ import java.util.*;
 public class ScatterCommand implements CommandExecutor {
 
     public static final String SYNTAX = ChatColor.RED + "/scatter typeID radius worldName players [-c=x,z] [-t] [-min=minDist] [-minradius=minRadius]";
+
+    private final List<Material> mats;
+
+    public ScatterCommand(List<Material> mats)
+    {
+        this.mats = mats;
+    }
 
     /**
      * Parse the scatter command in the syntax:
@@ -125,6 +129,9 @@ public class ScatterCommand implements CommandExecutor {
         logic.setCentre(new Location(world, centerX, 0, centerZ));
         logic.setMaxAttempts(250); //TODO config
         logic.setRadius(radius);
+        if(!mats.isEmpty()) {
+            logic.addMaterials(mats.toArray(new Material[mats.size()]));
+        }
 
         List<DeadZone> baseDeadZones = new ArrayList<DeadZone>();
 
