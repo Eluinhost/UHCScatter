@@ -116,6 +116,7 @@ public class ScatterCommand implements CommandExecutor {
 
             if(arg.equals("*")) {
                 toScatter.addAll(Arrays.asList(Bukkit.getOnlinePlayers()));
+                continue;
             }
 
             Player player = Bukkit.getPlayer(arg);
