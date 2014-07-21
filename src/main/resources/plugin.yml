@@ -6,10 +6,10 @@ author: ghowden/Eluinhost
 website: wiki.publicuhc.com
 database: false
 commands:
-    scatter:
+    sct:
       description: Scatter players
       usage: /<command>
-      aliases: [uhcscatter]
+      aliases: [uhcsct]
 permissions:
     UHC.scatter.command:
         description: Use the scatter command

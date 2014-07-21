@@ -18,7 +18,7 @@ import java.util.*;
 
 public class ScatterCommand implements CommandExecutor {
 
-    public static final String SYNTAX = ChatColor.RED + "/scatter typeID radius worldName players [-c=x,z] [-t] [-min=minDist] [-minradius=minRadius]";
+    public static final String SYNTAX = ChatColor.RED + "/sct typeID radius worldName players [-c=x,z] [-t] [-min=minDist] [-minradius=minRadius]";
 
     private final List<Material> mats;
     private final int maxAttempts;
@@ -31,7 +31,7 @@ public class ScatterCommand implements CommandExecutor {
 
     /**
      * Parse the scatter command in the syntax:
-     *     /scatter typeID radius worldName players [-c=x,z] [-t] [-min=minDist] [-minradius=minRadius]
+     *     /sct typeID radius worldName players [-c=x,z] [-t] [-min=minDist] [-minradius=minRadius]
      */
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
