@@ -13,6 +13,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.ScoreboardManager;
+import org.bukkit.scoreboard.Team;
 
 import java.util.*;
 
@@ -100,7 +103,6 @@ public class ScatterCommand implements CommandExecutor {
                     }
                 } else if (lowerArg.startsWith("-t")) {
                     asTeams = true;
-                    //TODO TEAMS!
                 } else if (lowerArg.startsWith("-min=")) {
                     arg = arg.substring(5);
                     try {
@@ -168,7 +170,27 @@ public class ScatterCommand implements CommandExecutor {
                 new CircularDeadZoneBuilder(minDist)
         );
 
-        int amount = toScatter.size();
+        HashMap<String, List<Player>> teams = new HashMap<String, List<Player>>();
+
+        if(asTeams) {
+            Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
+            Iterator<Player> players = toScatter.iterator();
+            while(players.hasNext()) {
+                Player player = players.next();
+                Team team = scoreboard.getPlayerTeam(player);
+                if(null != team) {
+                    List<Player> playerList = teams.get(team.getName());
+                    if(null == playerList) {
+                        playerList = new ArrayList<Player>();
+                        teams.put(team.getName(), playerList);
+                    }
+                    playerList.add(player);
+                    players.remove();
+                }
+            }
+        }
+
+        int amount = toScatter.size() + teams.size();
         List<Location> locations;
         try {
             locations = scatterer.getScatterLocations(amount);
@@ -178,20 +200,31 @@ public class ScatterCommand implements CommandExecutor {
         }
 
         Collections.shuffle(locations);
-        Bukkit.broadcastMessage(ChatColor.GOLD + "Starting scatter of " + amount + " players");
+        Bukkit.broadcastMessage(ChatColor.GOLD + "Starting scatter of " + amount + " players/teams");
 
-        for(int i = 0; i < amount; i++) {
-            Player player = toScatter.get(i);
-            Location location = locations.get(i);
+        Iterator<Location> locationIterator = locations.iterator();
+        int count = 1;
 
-            //add a block so we teleport on top of it
+        for(Map.Entry<String, List<Player>> team : teams.entrySet()) {
+            Location location = locationIterator.next();
             location.add(0, 1, 0);
 
-            player.teleport(location);
-            Bukkit.broadcastMessage(ChatColor.GREEN + "[" + (i+1) + "/" + amount + "] " + player.getName() + " scattered");
+            for(Player p : team.getValue()) {
+                p.teleport(location);
+            }
+
+            Bukkit.broadcastMessage(ChatColor.GREEN + "[" + count++ + "/" + amount + "] Team " + team.getKey() + " scattered");
         }
 
-        sender.sendMessage(ChatColor.GOLD + "Scatter complete");
+        for(Player p : toScatter) {
+            Location location = locationIterator.next();
+            location.add(0, 1, 0);
+
+            p.teleport(location);
+            Bukkit.broadcastMessage(ChatColor.GREEN + "[" + count++ + "/" + amount + "] " + p.getName() + " scattered");
+        }
+
+        Bukkit.broadcastMessage(ChatColor.GOLD + "Scatter complete");
         return true;
     }
 }
