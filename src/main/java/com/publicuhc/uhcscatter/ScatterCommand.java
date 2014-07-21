@@ -1,8 +1,13 @@
 package com.publicuhc.uhcscatter;
 
+import com.publicuhc.scatter.DefaultScatterer;
+import com.publicuhc.scatter.Scatterer;
+import com.publicuhc.scatter.exceptions.ScatterLocationException;
 import com.publicuhc.scatter.logic.RandomCircleScatterLogic;
 import com.publicuhc.scatter.logic.RandomSquareScatterLogic;
 import com.publicuhc.scatter.logic.StandardScatterLogic;
+import com.publicuhc.scatter.zones.CircularDeadZoneBuilder;
+import com.publicuhc.scatter.zones.DeadZone;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -12,10 +17,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class ScatterCommand implements CommandExecutor {
 
@@ -87,6 +89,7 @@ public class ScatterCommand implements CommandExecutor {
                     }
                 } else if (arg.startsWith("-t")) {
                     asTeams = true;
+                    //TODO TEAMS!
                 } else if (arg.startsWith("-min=")) {
                     arg = arg.substring(5);
                     try {
@@ -123,9 +126,52 @@ public class ScatterCommand implements CommandExecutor {
         logic.setMaxAttempts(250); //TODO config
         logic.setRadius(radius);
 
+        List<DeadZone> baseDeadZones = new ArrayList<DeadZone>();
 
+        if(minDist > 0) {
+            CircularDeadZoneBuilder builder = new CircularDeadZoneBuilder(minDist);
 
+            //add dead zones for all not scattered players
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (!toScatter.contains(player)) {
+                    baseDeadZones.add(builder.buildForLocation(player.getLocation()));
+                }
+            }
+        }
 
-        return false;
+        if(minRadius > 0) {
+            CircularDeadZoneBuilder builder = new CircularDeadZoneBuilder(minRadius);
+            baseDeadZones.add(builder.buildForLocation(new Location(world, centerX, 0, centerZ)));
+        }
+
+        Scatterer scatterer = new DefaultScatterer(
+                logic,
+                baseDeadZones,
+                new CircularDeadZoneBuilder(minDist)
+        );
+
+        int amount = toScatter.size();
+        List<Location> locations;
+        try {
+            locations = scatterer.getScatterLocations(amount);
+        } catch (ScatterLocationException e) {
+            sender.sendMessage(ChatColor.RED + "Couldn't find valid locations for all players");
+            return true;
+        }
+
+        Collections.shuffle(locations);
+        Bukkit.broadcastMessage(ChatColor.GOLD + "Starting scatter of " + amount + " players");
+
+        for(int i = 0; i < amount; i++) {
+            Player player = toScatter.get(i);
+            Location location = locations.get(i);
+
+            //TODO check and protect?
+            player.teleport(location);
+            Bukkit.broadcastMessage(ChatColor.GREEN + "[" + i + "/" + amount + "] " + player.getName() + " scattered");
+        }
+
+        sender.sendMessage(ChatColor.GOLD + "Scatter complete");
+        return true;
     }
 }
