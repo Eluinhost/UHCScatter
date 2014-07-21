@@ -166,6 +166,9 @@ public class ScatterCommand implements CommandExecutor {
             Player player = toScatter.get(i);
             Location location = locations.get(i);
 
+            //add a block so we teleport on top of it
+            location.add(0, 1, 0);
+
             //TODO check and protect?
             player.teleport(location);
             Bukkit.broadcastMessage(ChatColor.GREEN + "[" + (i+1) + "/" + amount + "] " + player.getName() + " scattered");
