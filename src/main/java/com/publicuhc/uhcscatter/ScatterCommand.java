@@ -77,7 +77,8 @@ public class ScatterCommand implements CommandExecutor {
             String arg = args[i];
 
             if(arg.charAt(0) == '-') {
-                if (arg.startsWith("-c=")) {
+                String lowerArg = arg.toLowerCase();
+                if (lowerArg.startsWith("-c=")) {
                     arg = arg.substring(3);
                     String[] coords = arg.split(",");
                     if(coords.length != 2) {
@@ -91,10 +92,10 @@ public class ScatterCommand implements CommandExecutor {
                         sender.sendMessage(ChatColor.RED + "Invalid number/s for coords given");
                         return true;
                     }
-                } else if (arg.startsWith("-t")) {
+                } else if (lowerArg.startsWith("-t")) {
                     asTeams = true;
                     //TODO TEAMS!
-                } else if (arg.startsWith("-min=")) {
+                } else if (lowerArg.startsWith("-min=")) {
                     arg = arg.substring(5);
                     try {
                         minDist = Double.parseDouble(arg);
@@ -102,14 +103,17 @@ public class ScatterCommand implements CommandExecutor {
                         sender.sendMessage(ChatColor.RED + "Invalid number for minimum distance given");
                         return true;
                     }
-                } else if (arg.startsWith("-minradius=")) {
-                    arg = arg.substring(10);
+                } else if (lowerArg.startsWith("-minradius=")) {
+                    arg = arg.substring(11);
                     try {
                         minRadius = Double.parseDouble(arg);
                     } catch (NumberFormatException ex) {
                         sender.sendMessage(ChatColor.RED + "Invalid number for minimum radius given");
                         return true;
                     }
+                } else {
+                    sender.sendMessage(ChatColor.RED + "Invalid option: " + arg);
+                    return true;
                 }
                 continue;
             }
