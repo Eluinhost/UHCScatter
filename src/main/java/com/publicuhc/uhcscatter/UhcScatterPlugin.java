@@ -27,6 +27,8 @@ public class UhcScatterPlugin extends JavaPlugin {
             }
         }
 
-        getServer().getPluginCommand("scatter").setExecutor(new ScatterCommand(mats));
+        int maxAttempts = config.getInt("max attempts per location");
+
+        getServer().getPluginCommand("scatter").setExecutor(new ScatterCommand(mats, maxAttempts));
     }
 }

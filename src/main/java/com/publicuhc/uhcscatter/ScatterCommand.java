@@ -21,10 +21,12 @@ public class ScatterCommand implements CommandExecutor {
     public static final String SYNTAX = ChatColor.RED + "/scatter typeID radius worldName players [-c=x,z] [-t] [-min=minDist] [-minradius=minRadius]";
 
     private final List<Material> mats;
+    private final int maxAttempts;
 
-    public ScatterCommand(List<Material> mats)
+    public ScatterCommand(List<Material> mats, int maxAttempts)
     {
         this.mats = mats;
+        this.maxAttempts = maxAttempts;
     }
 
     /**
@@ -132,7 +134,7 @@ public class ScatterCommand implements CommandExecutor {
         }
 
         logic.setCentre(new Location(world, centerX, 0, centerZ));
-        logic.setMaxAttempts(250); //TODO config
+        logic.setMaxAttempts(maxAttempts);
         logic.setRadius(radius);
         if(!mats.isEmpty()) {
             logic.addMaterials(mats.toArray(new Material[mats.size()]));

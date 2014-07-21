@@ -7,3 +7,4 @@ allowed blocks:
 - SNOW_BLOCK
 - ICE
 - LONG_GRASS
+max attempts per location: 250
