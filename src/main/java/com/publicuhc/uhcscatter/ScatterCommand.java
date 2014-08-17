@@ -1,5 +1,13 @@
 package com.publicuhc.uhcscatter;
 
+import com.publicuhc.pluginframework.configuration.Configurator;
+import com.publicuhc.pluginframework.routing.CommandMethod;
+import com.publicuhc.pluginframework.routing.CommandRequest;
+import com.publicuhc.pluginframework.routing.OptionsMethod;
+import com.publicuhc.pluginframework.routing.converters.LocationValueConverter;
+import com.publicuhc.pluginframework.routing.converters.OnlinePlayerValueConverter;
+import com.publicuhc.pluginframework.shaded.inject.Inject;
+import com.publicuhc.pluginframework.shaded.joptsimple.*;
 import com.publicuhc.scatter.DefaultScatterer;
 import com.publicuhc.scatter.Scatterer;
 import com.publicuhc.scatter.exceptions.ScatterLocationException;
@@ -8,169 +16,80 @@ import com.publicuhc.scatter.logic.RandomSquareScatterLogic;
 import com.publicuhc.scatter.logic.StandardScatterLogic;
 import com.publicuhc.scatter.zones.CircularDeadZoneBuilder;
 import com.publicuhc.scatter.zones.DeadZone;
-import org.bukkit.*;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.PluginLogger;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
 import java.util.*;
 
-public class ScatterCommand implements CommandExecutor {
+public class ScatterCommand  {
 
-    public static final String SYNTAX = ChatColor.RED + "/sct typeID radius worldName players [-c=x,z] [-t] [-min=minDist] [-minradius=minRadius]";
-
-    private final List<Material> mats;
+    private final List<Material> mats = new ArrayList<Material>();
     private final int maxAttempts;
 
-    public ScatterCommand(List<Material> mats, int maxAttempts)
+    private NonOptionArgumentSpec<Player> nonOptions;
+
+    @Inject
+    public ScatterCommand(Configurator configurator, PluginLogger logger)
     {
-        this.mats = mats;
-        this.maxAttempts = maxAttempts;
+        FileConfiguration config = configurator.getConfig("main");
+        List<String> stringMats = config.getStringList("allowed blocks");
+        for(String stringMat : stringMats) {
+            Material mat = Material.matchMaterial(stringMat);
+            if(null == mat)
+                logger.severe("Unknown material " + stringMat);
+            else
+                mats.add(mat);
+        }
+        maxAttempts = config.getInt("max attempts per location");
     }
 
-    /**
-     * Parse the scatter command in the syntax:
-     *     /sct typeID radius worldName players [-c=x,z] [-t] [-min=minDist] [-minradius=minRadius]
-     */
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if(!sender.hasPermission("UHC.scatter.command")) {
-            sender.sendMessage(ChatColor.RED + "You don't have permission to run this command");
-            return true;
-        }
-        if(args.length < 4) {
-            sender.sendMessage(SYNTAX);
-            return true;
-        }
+    @CommandMethod(command = "sct", permission = "UHC.scatter.command", options = true)
+    public void onScatterCommand(CommandRequest request)
+    {
+        OptionSet set = request.getOptions();
+        StandardScatterLogic logic = (StandardScatterLogic) set.valueOf("t");
+        Double radius = (Double) set.valueOf("r");
+        Double minRadius = (Double) set.valueOf("minradius");
+        Double min = (Double) set.valueOf("min");
+        Location center = (Location) set.valueOf("c");
+        boolean asTeams = set.has("teams");
 
-        String typeID = args[0];
-        StandardScatterLogic logic;
-        if(typeID.equalsIgnoreCase("circle")) {
-            logic = new RandomCircleScatterLogic(new Random());
-        } else if(typeID.equalsIgnoreCase("square")) {
-            logic = new RandomSquareScatterLogic(new Random());
-        } else {
-            sender.sendMessage(ChatColor.RED + "Type ID must be 'circle' or 'square', " + args[0] + "given");
-            return true;
-        }
+        List<Player> toScatter = set.valuesOf(nonOptions);
 
-        double radius;
-        try {
-            radius = Double.parseDouble(args[1]);
-            if(radius < 0)
-                throw new NumberFormatException();
-        } catch (NumberFormatException ex) {
-            sender.sendMessage(ChatColor.RED + "Radius must be a positive number!");
-            return true;
-        }
-
-        World world = Bukkit.getWorld(args[2]);
-        if(null == world) {
-            sender.sendMessage(ChatColor.RED + "World " + args[2] + " not found!");
-            return true;
-        }
-
-        List<Player> toScatter = new ArrayList<Player>();
-        boolean asTeams = false;
-        double minDist = 0;
-        double minRadius = 0;
-
-        double centerX = world.getSpawnLocation().getX();
-        double centerZ = world.getSpawnLocation().getZ();
-
-        for(int i = 3; i < args.length; i++) {
-            String arg = args[i];
-
-            if(arg.charAt(0) == '-') {
-                String lowerArg = arg.toLowerCase();
-                if (lowerArg.startsWith("-c=")) {
-                    arg = arg.substring(3);
-                    String[] coords = arg.split(",");
-                    if(coords.length != 2) {
-                        sender.sendMessage(ChatColor.RED + "Invalid coords given, must be in the format x,z");
-                        return true;
-                    }
-                    try {
-                        centerX = Double.parseDouble(coords[0]);
-                        centerZ = Double.parseDouble(coords[1]);
-                    } catch (NumberFormatException ex) {
-                        sender.sendMessage(ChatColor.RED + "Invalid number/s for coords given");
-                        return true;
-                    }
-                } else if (lowerArg.startsWith("-t")) {
-                    asTeams = true;
-                } else if (lowerArg.startsWith("-min=")) {
-                    arg = arg.substring(5);
-                    try {
-                        minDist = Double.parseDouble(arg);
-                    } catch (NumberFormatException ex) {
-                        sender.sendMessage(ChatColor.RED + "Invalid number for minimum distance given");
-                        return true;
-                    }
-                } else if (lowerArg.startsWith("-minradius=")) {
-                    arg = arg.substring(11);
-                    try {
-                        minRadius = Double.parseDouble(arg);
-                    } catch (NumberFormatException ex) {
-                        sender.sendMessage(ChatColor.RED + "Invalid number for minimum radius given");
-                        return true;
-                    }
-                } else {
-                    sender.sendMessage(ChatColor.RED + "Invalid option: " + arg);
-                    return true;
-                }
-                continue;
-            }
-
-            if(arg.equals("*")) {
-                toScatter.addAll(Arrays.asList(Bukkit.getOnlinePlayers()));
-                continue;
-            }
-
-            Player player = Bukkit.getPlayer(arg);
-            if(null == player) {
-                sender.sendMessage(ChatColor.RED + "Player " + arg + " not found!");
-                continue;
-            }
-            toScatter.add(player);
-        }
-
-        logic.setCentre(new Location(world, centerX, 0, centerZ));
+        logic.setCentre(center);
         logic.setMaxAttempts(maxAttempts);
         logic.setRadius(radius);
-        if(!mats.isEmpty()) {
-            logic.addMaterials(mats.toArray(new Material[mats.size()]));
-        }
+
+        if(!mats.isEmpty())
+            logic.setMaterials(mats);
+
+        CircularDeadZoneBuilder deadZoneBuilder = new CircularDeadZoneBuilder(min);
 
         List<DeadZone> baseDeadZones = new ArrayList<DeadZone>();
-
-        if(minDist > 0) {
-            CircularDeadZoneBuilder builder = new CircularDeadZoneBuilder(minDist);
-
+        if(min > 0) {
             //add dead zones for all not scattered players
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!toScatter.contains(player)) {
-                    baseDeadZones.add(builder.buildForLocation(player.getLocation()));
+                    baseDeadZones.add(deadZoneBuilder.buildForLocation(player.getLocation()));
                 }
             }
         }
 
         if(minRadius > 0) {
             CircularDeadZoneBuilder builder = new CircularDeadZoneBuilder(minRadius);
-            baseDeadZones.add(builder.buildForLocation(new Location(world, centerX, 0, centerZ)));
+            baseDeadZones.add(builder.buildForLocation(center));
         }
 
-        Scatterer scatterer = new DefaultScatterer(
-                logic,
-                baseDeadZones,
-                new CircularDeadZoneBuilder(minDist)
-        );
+        Scatterer scatterer = new DefaultScatterer(logic, baseDeadZones, deadZoneBuilder);
 
         HashMap<String, List<Player>> teams = new HashMap<String, List<Player>>();
-
         if(asTeams) {
             Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
             Iterator<Player> players = toScatter.iterator();
@@ -194,8 +113,8 @@ public class ScatterCommand implements CommandExecutor {
         try {
             locations = scatterer.getScatterLocations(amount);
         } catch (ScatterLocationException e) {
-            sender.sendMessage(ChatColor.RED + "Couldn't find valid locations for all players");
-            return true;
+            request.sendMessage(ChatColor.RED + "Couldn't find valid locations for all players");
+            return;
         }
 
         Collections.shuffle(locations);
@@ -224,6 +143,55 @@ public class ScatterCommand implements CommandExecutor {
         }
 
         Bukkit.broadcastMessage(ChatColor.GOLD + "Scatter complete");
-        return true;
+    }
+
+    @OptionsMethod
+    public void onScatterCommand(OptionParser parser)
+    {
+        parser.accepts("?").forHelp();
+        nonOptions = parser.nonOptions().withValuesConvertedBy(new OnlinePlayerValueConverter());
+        parser.accepts("t")
+                .withRequiredArg()
+                .required()
+                .withValuesConvertedBy(new ValueConverter<StandardScatterLogic>() {
+                    @Override
+                    public StandardScatterLogic convert(String value) {
+                        if(value.equalsIgnoreCase("circle"))
+                            return new RandomCircleScatterLogic(new Random());
+                        if(value.equalsIgnoreCase("square"))
+                            return new RandomSquareScatterLogic(new Random());
+                        throw new ValueConversionException("Invalid type");
+                    }
+                    @Override
+                    public Class<StandardScatterLogic> valueType() {
+                        return StandardScatterLogic.class;
+                    }
+                    @Override
+                    public String valuePattern() {
+                        return null;
+                    }
+                })
+                .describedAs("Type of scatter to use");
+        parser.accepts("teams", "Scatter players as teams");
+        parser.accepts("c")
+                .withRequiredArg()
+                .required()
+                .withValuesConvertedBy(new LocationValueConverter())
+                .describedAs("World/coordinates for the center");
+        parser.accepts("r")
+                .withRequiredArg()
+                .ofType(Double.class)
+                .required()
+                .describedAs("Radius for scatter");
+        parser.accepts("min")
+                .withRequiredArg()
+                .ofType(Double.class)
+                .defaultsTo(0D)
+                .describedAs("Minimum distance between players after scatter");
+        parser.accepts("minradius")
+                .withRequiredArg()
+                .ofType(Double.class)
+                .defaultsTo(0D)
+                .describedAs("Minimum radius from the center of the scatter");
     }
 }
