@@ -33,7 +33,7 @@ public class ScatterCommand  {
     private final List<Material> mats = new ArrayList<Material>();
     private final int maxAttempts;
 
-    private NonOptionArgumentSpec<Player> nonOptions;
+    private NonOptionArgumentSpec<Player[]> nonOptions;
 
     @Inject
     public ScatterCommand(Configurator configurator, PluginLogger logger)
@@ -61,7 +61,12 @@ public class ScatterCommand  {
         Location center = (Location) set.valueOf("c");
         boolean asTeams = set.has("teams");
 
-        List<Player> toScatter = set.valuesOf(nonOptions);
+        List<Player[]> playerlist = set.valuesOf(nonOptions);
+
+        List<Player> toScatter = new ArrayList<Player>();
+        for(Player[] plist : playerlist) {
+            Collections.addAll(toScatter, plist);
+        }
 
         logic.setCentre(center);
         logic.setMaxAttempts(maxAttempts);
@@ -149,7 +154,7 @@ public class ScatterCommand  {
     public void onScatterCommand(OptionParser parser)
     {
         parser.accepts("?").forHelp();
-        nonOptions = parser.nonOptions().withValuesConvertedBy(new OnlinePlayerValueConverter());
+        nonOptions = parser.nonOptions().withValuesConvertedBy(new OnlinePlayerValueConverter(true));
         parser.accepts("t")
                 .withRequiredArg()
                 .required()
