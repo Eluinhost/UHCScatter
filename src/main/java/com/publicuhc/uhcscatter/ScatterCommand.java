@@ -1,5 +1,7 @@
 package com.publicuhc.uhcscatter;
 
+import com.publicuhc.pluginframework.configuration.Configurator;
+import com.publicuhc.pluginframework.shaded.inject.Inject;
 import com.publicuhc.scatter.DefaultScatterer;
 import com.publicuhc.scatter.Scatterer;
 import com.publicuhc.scatter.exceptions.ScatterLocationException;
@@ -12,7 +14,9 @@ import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.PluginLogger;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
@@ -22,13 +26,22 @@ public class ScatterCommand implements CommandExecutor {
 
     public static final String SYNTAX = ChatColor.RED + "/sct typeID radius worldName players [-c=x,z] [-t] [-min=minDist] [-minradius=minRadius]";
 
-    private final List<Material> mats;
+    private final List<Material> mats = new ArrayList<Material>();
     private final int maxAttempts;
 
-    public ScatterCommand(List<Material> mats, int maxAttempts)
+    @Inject
+    public ScatterCommand(Configurator configurator, PluginLogger logger)
     {
-        this.mats = mats;
-        this.maxAttempts = maxAttempts;
+        FileConfiguration config = configurator.getConfig("main");
+        List<String> stringMats = config.getStringList("allowed blocks");
+        for(String stringMat : stringMats) {
+            Material mat = Material.matchMaterial(stringMat);
+            if(null == mat)
+                logger.severe("Unknown material " + stringMat);
+            else
+                mats.add(mat);
+        }
+        maxAttempts = config.getInt("max attempts per location");
     }
 
     /**

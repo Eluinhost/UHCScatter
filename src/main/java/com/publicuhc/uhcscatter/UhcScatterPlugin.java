@@ -2,6 +2,7 @@ package com.publicuhc.uhcscatter;
 
 import com.publicuhc.pluginframework.FrameworkJavaPlugin;
 import com.publicuhc.pluginframework.configuration.Configurator;
+import com.publicuhc.pluginframework.routing.exception.CommandParseException;
 import com.publicuhc.pluginframework.shaded.inject.Inject;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -15,18 +16,10 @@ public class UhcScatterPlugin extends FrameworkJavaPlugin {
     @Override
     public void onFrameworkEnable()
     {
-        FileConfiguration config = getConfigurator().getConfig("main");
-        List<String> stringMats = config.getStringList("allowed blocks");
-        List<Material> mats = new ArrayList<Material>();
-        for(String stringMat : stringMats) {
-            Material mat = Material.matchMaterial(stringMat);
-            if(null == mat)
-                getLogger().severe("Unknown material " + stringMat);
-            else
-                mats.add(mat);
+        try {
+            getRouter().registerCommands(ScatterCommand.class);
+        } catch (CommandParseException e) {
+            e.printStackTrace();
         }
-        int maxAttempts = config.getInt("max attempts per location");
-
-        getServer().getPluginCommand("sct").setExecutor(new ScatterCommand(mats, maxAttempts));
     }
 }
