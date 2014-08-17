@@ -12,17 +12,10 @@ import java.util.List;
 
 public class UhcScatterPlugin extends FrameworkJavaPlugin {
 
-    private FileConfiguration config;
-
-    @Inject
-    public void setConfigurator(Configurator configs)
-    {
-        config = configs.getConfig("main");
-    }
-
     @Override
     public void onFrameworkEnable()
     {
+        FileConfiguration config = getConfigurator().getConfig("main");
         List<String> stringMats = config.getStringList("allowed blocks");
         List<Material> mats = new ArrayList<Material>();
         for(String stringMat : stringMats) {
