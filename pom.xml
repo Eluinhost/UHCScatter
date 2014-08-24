@@ -108,17 +108,12 @@
                     <artifactSet>
                         <includes>
                             <include>com.publicuhc:bukkit-scatter</include>
-                            <include>com.publicuhc:pluginframework</include>
                         </includes>
                     </artifactSet>
                     <relocations>
                         <relocation>
                             <pattern>com.publicuhc.scatter</pattern>
                             <shadedPattern>${project.groupId}.${project.artifactId}.bukkitscatter</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>com.publicuhc.pluginframework</pattern>
-                            <shadedPattern>${project.groupId}.${project.artifactId}.framework</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>
