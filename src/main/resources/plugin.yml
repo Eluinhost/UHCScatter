@@ -1,10 +1,11 @@
 name: UHCScatter
 main: com.publicuhc.uhcscatter.UhcScatterPlugin
 version: 1.0.0
-description: Test scatter plugin for UHC
+description: Scatter addon plugin for UHC
 author: ghowden/Eluinhost
 website: wiki.publicuhc.com
 database: false
+depend: [UltraHardcore]
 commands:
     sct:
       description: Scatter players

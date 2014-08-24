@@ -1,13 +1,5 @@
 package com.publicuhc.uhcscatter;
 
-import com.publicuhc.pluginframework.configuration.Configurator;
-import com.publicuhc.pluginframework.routing.CommandMethod;
-import com.publicuhc.pluginframework.routing.CommandRequest;
-import com.publicuhc.pluginframework.routing.OptionsMethod;
-import com.publicuhc.pluginframework.routing.converters.LocationValueConverter;
-import com.publicuhc.pluginframework.routing.converters.OnlinePlayerValueConverter;
-import com.publicuhc.pluginframework.shaded.inject.Inject;
-import com.publicuhc.pluginframework.shaded.joptsimple.*;
 import com.publicuhc.scatter.DefaultScatterer;
 import com.publicuhc.scatter.Scatterer;
 import com.publicuhc.scatter.exceptions.ScatterLocationException;
@@ -16,6 +8,14 @@ import com.publicuhc.scatter.logic.RandomSquareScatterLogic;
 import com.publicuhc.scatter.logic.StandardScatterLogic;
 import com.publicuhc.scatter.zones.CircularDeadZoneBuilder;
 import com.publicuhc.scatter.zones.DeadZone;
+import com.publicuhc.ultrahardcore.framework.configuration.Configurator;
+import com.publicuhc.ultrahardcore.framework.routing.CommandMethod;
+import com.publicuhc.ultrahardcore.framework.routing.CommandRequest;
+import com.publicuhc.ultrahardcore.framework.routing.OptionsMethod;
+import com.publicuhc.ultrahardcore.framework.routing.converters.LocationValueConverter;
+import com.publicuhc.ultrahardcore.framework.routing.converters.OnlinePlayerValueConverter;
+import com.publicuhc.ultrahardcore.framework.shaded.javax.Inject;
+import com.publicuhc.ultrahardcore.framework.shaded.joptsimple.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -153,7 +153,6 @@ public class ScatterCommand  {
     @OptionsMethod
     public void onScatterCommand(OptionParser parser)
     {
-        parser.accepts("?").forHelp();
         nonOptions = parser.nonOptions().withValuesConvertedBy(new OnlinePlayerValueConverter(true));
         parser.accepts("t")
                 .withRequiredArg()
