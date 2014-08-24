@@ -3,8 +3,6 @@ package com.publicuhc.uhcscatter;
 import com.publicuhc.scatter.DefaultScatterer;
 import com.publicuhc.scatter.Scatterer;
 import com.publicuhc.scatter.exceptions.ScatterLocationException;
-import com.publicuhc.scatter.logic.RandomCircleScatterLogic;
-import com.publicuhc.scatter.logic.RandomSquareScatterLogic;
 import com.publicuhc.scatter.logic.StandardScatterLogic;
 import com.publicuhc.scatter.zones.CircularDeadZoneBuilder;
 import com.publicuhc.scatter.zones.DeadZone;
@@ -15,7 +13,9 @@ import com.publicuhc.ultrahardcore.framework.routing.OptionsMethod;
 import com.publicuhc.ultrahardcore.framework.routing.converters.LocationValueConverter;
 import com.publicuhc.ultrahardcore.framework.routing.converters.OnlinePlayerValueConverter;
 import com.publicuhc.ultrahardcore.framework.shaded.javax.Inject;
-import com.publicuhc.ultrahardcore.framework.shaded.joptsimple.*;
+import com.publicuhc.ultrahardcore.framework.shaded.joptsimple.NonOptionArgumentSpec;
+import com.publicuhc.ultrahardcore.framework.shaded.joptsimple.OptionParser;
+import com.publicuhc.ultrahardcore.framework.shaded.joptsimple.OptionSet;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -157,24 +157,7 @@ public class ScatterCommand  {
         parser.accepts("t")
                 .withRequiredArg()
                 .required()
-                .withValuesConvertedBy(new ValueConverter<StandardScatterLogic>() {
-                    @Override
-                    public StandardScatterLogic convert(String value) {
-                        if(value.equalsIgnoreCase("circle"))
-                            return new RandomCircleScatterLogic(new Random());
-                        if(value.equalsIgnoreCase("square"))
-                            return new RandomSquareScatterLogic(new Random());
-                        throw new ValueConversionException("Invalid type");
-                    }
-                    @Override
-                    public Class<StandardScatterLogic> valueType() {
-                        return StandardScatterLogic.class;
-                    }
-                    @Override
-                    public String valuePattern() {
-                        return null;
-                    }
-                })
+                .withValuesConvertedBy(new ScatterLogicValueConverter())
                 .describedAs("Type of scatter to use");
         parser.accepts("teams", "Scatter players as teams");
         parser.accepts("c")
